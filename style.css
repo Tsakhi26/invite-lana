@@ -471,8 +471,8 @@ html, body {
   #scene-envelope {
     padding: 0;
     margin: 0;
-    align-items: flex-start;
-    justify-content: flex-start;
+    align-items: center;
+    justify-content: center;
   }
 
   /* btn-yes garde sa taille fixe sur mobile */
