@@ -456,8 +456,23 @@ html, body {
    ============================================= */
 @media (max-width: 480px) {
   .envelope-wrapper {
-    width: 92vw;
-    border-radius: 12px;
+    width: 100vw;
+    max-width: 100vw;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .envelope-img {
+    width: 100vw;
+    display: block;
+  }
+
+  #scene-envelope {
+    padding: 0;
+    margin: 0;
+    align-items: flex-start;
+    justify-content: flex-start;
   }
 
   /* btn-yes garde sa taille fixe sur mobile */
