@@ -114,6 +114,34 @@ function showPlayFallback() {
 }
 
 // ─────────────────────────────────────────────
+//  BOUTON TÉLÉCHARGER — fetch + blob (cross-origin mobile)
+// ─────────────────────────────────────────────
+const PDF_URL      = 'http://tabrichi.com/lana/img/FairePartLana.pdf';
+const PDF_FILENAME = 'FairePartLana.pdf';
+
+document.getElementById('btn-download').addEventListener('click', () => {
+  // Méthode 1 : fetch → blob → lien temporaire (Android Chrome, desktop)
+  fetch(PDF_URL)
+    .then(res => {
+      if (!res.ok) throw new Error('fetch failed');
+      return res.blob();
+    })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = PDF_FILENAME;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 2000);
+    })
+    .catch(() => {
+      // Méthode 2 fallback : ouverture directe dans un nouvel onglet (iOS Safari)
+      window.open(PDF_URL, '_blank');
+    });
+});
+
+// ─────────────────────────────────────────────
 //  ÉTAPE 3 : Boutons RSVP
 // ─────────────────────────────────────────────
 btnRsvpYes.addEventListener('click', () => openModal());
