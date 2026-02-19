@@ -114,31 +114,15 @@ function showPlayFallback() {
 }
 
 // ─────────────────────────────────────────────
-//  BOUTON TÉLÉCHARGER — proxy Vercel (sans CORS)
+//  BOUTON TÉLÉCHARGER — même domaine, lien direct
 // ─────────────────────────────────────────────
-const PDF_PROXY    = '/api/download-pdf';
-const PDF_FILENAME = 'FairePartLana.pdf';
-
 document.getElementById('btn-download').addEventListener('click', () => {
-  // Le proxy Vercel sert le PDF depuis le même domaine → pas de CORS
-  fetch(PDF_PROXY)
-    .then(res => {
-      if (!res.ok) throw new Error('fetch failed');
-      return res.blob();
-    })
-    .then(blob => {
-      const url = URL.createObjectURL(blob);
-      const a   = document.createElement('a');
-      a.href     = url;
-      a.download = PDF_FILENAME;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 2000);
-    })
-    .catch(() => {
-      // Fallback : ouvre le proxy dans un nouvel onglet
-      window.open(PDF_PROXY, '_blank');
-    });
+  const a = document.createElement('a');
+  a.href     = '/img/FairePartLana.pdf';
+  a.download = 'FairePartLana.pdf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 });
 
 // ─────────────────────────────────────────────
