@@ -114,14 +114,14 @@ function showPlayFallback() {
 }
 
 // ─────────────────────────────────────────────
-//  BOUTON TÉLÉCHARGER — fetch + blob (cross-origin mobile)
+//  BOUTON TÉLÉCHARGER — proxy Vercel (sans CORS)
 // ─────────────────────────────────────────────
-const PDF_URL      = 'http://tabrichi.com/lana/img/FairePartLana.pdf';
+const PDF_PROXY    = '/api/download-pdf';
 const PDF_FILENAME = 'FairePartLana.pdf';
 
 document.getElementById('btn-download').addEventListener('click', () => {
-  // Méthode 1 : fetch → blob → lien temporaire (Android Chrome, desktop)
-  fetch(PDF_URL)
+  // Le proxy Vercel sert le PDF depuis le même domaine → pas de CORS
+  fetch(PDF_PROXY)
     .then(res => {
       if (!res.ok) throw new Error('fetch failed');
       return res.blob();
@@ -136,8 +136,8 @@ document.getElementById('btn-download').addEventListener('click', () => {
       setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 2000);
     })
     .catch(() => {
-      // Méthode 2 fallback : ouverture directe dans un nouvel onglet (iOS Safari)
-      window.open(PDF_URL, '_blank');
+      // Fallback : ouvre le proxy dans un nouvel onglet
+      window.open(PDF_PROXY, '_blank');
     });
 });
 
