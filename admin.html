@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Liste des participants</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <h1 class="header-title">🎉 Dashboard Invités</h1>
+        <span class="header-subtitle">Gestion des participants</span>
+      </div>
+      <button class="btn-export" id="btn-export">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exporter CSV
+      </button>
+    </div>
+  </header>
+
+  <!-- STATS -->
+  <section class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-icon">👥</span>
+      <div class="stat-body">
+        <span class="stat-value" id="stat-responses">0</span>
+        <span class="stat-label">Réponses reçues</span>
+      </div>
+    </div>
+    <div class="stat-card stat-orange">
+      <span class="stat-icon">🎟️</span>
+      <div class="stat-body">
+        <span class="stat-value" id="stat-total">0</span>
+        <span class="stat-label">Personnes au total</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">📅</span>
+      <div class="stat-body">
+        <span class="stat-value" id="stat-last">—</span>
+        <span class="stat-label">Dernière réponse</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- BARRE DE RECHERCHE -->
+  <section class="toolbar">
+    <div class="search-wrapper">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        type="text"
+        id="search-input"
+        class="search-input"
+        placeholder="Rechercher un invité..."
+      />
+    </div>
+    <span class="result-count" id="result-count"></span>
+  </section>
+
+  <!-- TABLEAU -->
+  <section class="table-section">
+    <div class="table-wrapper">
+      <table class="guests-table" id="guests-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nom &amp; Prénom</th>
+            <th>Personnes</th>
+            <th>Date de réponse</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="guests-body">
+          <!-- Rempli par admin.js -->
+        </tbody>
+      </table>
+
+      <!-- État vide -->
+      <div class="empty-state hidden" id="empty-state">
+        <span class="empty-icon">📭</span>
+        <p>Aucun participant pour l'instant.</p>
+      </div>
+
+      <!-- Aucun résultat de recherche -->
+      <div class="empty-state hidden" id="no-results">
+        <span class="empty-icon">🔍</span>
+        <p>Aucun résultat pour cette recherche.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL MODIFIER -->
+  <div class="modal-backdrop hidden" id="modal-edit-backdrop">
+    <div class="modal-edit">
+      <button class="modal-close" id="modal-edit-close">&times;</button>
+      <h2 class="modal-edit-title">Modifier l'invité</h2>
+      <form id="edit-form" novalidate>
+        <input type="hidden" id="edit-id" />
+        <div class="form-group">
+          <label for="edit-name">Nom &amp; Prénom</label>
+          <input type="text" id="edit-name" required />
+          <span class="field-error" id="edit-error-name"></span>
+        </div>
+        <div class="form-group">
+          <label for="edit-guests">Nombre de personnes</label>
+          <input type="number" id="edit-guests" min="1" max="20" required />
+          <span class="field-error" id="edit-error-guests"></span>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" id="edit-cancel">Annuler</button>
+          <button type="submit" class="btn-save">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRMER SUPPRESSION -->
+  <div class="modal-backdrop hidden" id="modal-delete-backdrop">
+    <div class="modal-delete">
+      <span class="delete-icon">🗑️</span>
+      <h3 class="delete-title">Supprimer cet invité ?</h3>
+      <p class="delete-sub" id="delete-name-preview"></p>
+      <div class="form-actions">
+        <button class="btn-cancel" id="delete-cancel">Annuler</button>
+        <button class="btn-delete-confirm" id="delete-confirm">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
