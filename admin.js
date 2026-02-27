@@ -6,6 +6,8 @@ const STORAGE_KEY = 'invitation_guests';
 
 // ── Éléments DOM ────────────────────────────
 const statResponses   = document.getElementById('stat-responses');
+const statPresent     = document.getElementById('stat-present');
+const statAbsent      = document.getElementById('stat-absent');
 const statTotal       = document.getElementById('stat-total');
 const statLast        = document.getElementById('stat-last');
 const searchInput     = document.getElementById('search-input');
@@ -50,7 +52,11 @@ function saveGuests(list) {
 // ─────────────────────────────────────────────
 function updateStats(list) {
   const totalPersonnes = list.reduce((sum, g) => sum + (g.guests || 0), 0);
+  const presentCount = list.filter(g => g.status !== 'absent').length;
+  const absentCount = list.filter(g => g.status === 'absent').length;
   statResponses.textContent = list.length;
+  statPresent.textContent   = presentCount;
+  statAbsent.textContent    = absentCount;
   statTotal.textContent     = totalPersonnes;
 
   if (list.length > 0) {
