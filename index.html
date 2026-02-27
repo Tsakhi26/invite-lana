@@ -43,9 +43,10 @@
       <span class="btn-download-label">Télécharger l'invitation</span>
     </button>
 
-    <!-- Bouton RSVP — bas centré -->
+    <!-- Boutons RSVP — bas centré -->
     <div class="rsvp-overlay hidden" id="rsvp-overlay">
-      <button class="btn btn-yes" id="btn-rsvp-yes">Je participe</button>
+      <button class="btn btn-absent" id="btn-rsvp-no">Absent</button>
+      <button class="btn btn-yes" id="btn-rsvp-yes">Présent</button>
     </div>
   </div>
 
@@ -67,7 +68,7 @@
           />
           <span class="field-error" id="error-name"></span>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="group-guests">
           <label for="input-guests">Nombre de personnes</label>
           <input
             type="number"
@@ -78,6 +79,14 @@
             required
           />
           <span class="field-error" id="error-guests"></span>
+        </div>
+        <div class="form-group">
+          <label for="input-message">Message <span class="label-optional">(facultatif)</span></label>
+          <textarea
+            id="input-message"
+            placeholder="Un petit mot..."
+            rows="3"
+          ></textarea>
         </div>
         <button type="submit" class="btn btn-submit">Confirmer ✓</button>
       </form>

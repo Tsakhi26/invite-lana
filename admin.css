@@ -269,6 +269,51 @@ html, body {
   font-size: 13px;
 }
 
+/* Badges statut */
+.badge-present {
+  display: inline-block;
+  background: #e6f9ec;
+  color: #1b8a3a;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-absent {
+  display: inline-block;
+  background: #f5f5f5;
+  color: #999;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-guests-na {
+  background: #f5f5f5;
+  color: #ccc;
+}
+
+/* Message column */
+.td-message {
+  max-width: 200px;
+}
+
+.td-message-text {
+  font-size: 13px;
+  color: #555;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.td-message-empty {
+  color: #ddd;
+  font-size: 13px;
+}
+
 .td-actions {
   display: flex;
   gap: 8px;
@@ -518,11 +563,15 @@ html, body {
   .header-inner { padding: 14px 16px; }
   .stats-grid, .toolbar, .table-section { padding: 0 16px; }
 
+  /* Hide #, Message, Date on tablet */
   .guests-table th:nth-child(1),
   .guests-table td:nth-child(1) { display: none; }
 
-  .guests-table th:nth-child(4),
-  .guests-table td:nth-child(4) { display: none; }
+  .guests-table th:nth-child(5),
+  .guests-table td:nth-child(5) { display: none; }
+
+  .guests-table th:nth-child(6),
+  .guests-table td:nth-child(6) { display: none; }
 }
 
 @media (max-width: 480px) {

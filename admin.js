@@ -23,6 +23,7 @@ const editForm          = document.getElementById('edit-form');
 const editId            = document.getElementById('edit-id');
 const editName          = document.getElementById('edit-name');
 const editGuests        = document.getElementById('edit-guests');
+const editMessage       = document.getElementById('edit-message');
 const editErrorName     = document.getElementById('edit-error-name');
 const editErrorGuests   = document.getElementById('edit-error-guests');
 
@@ -48,7 +49,7 @@ function saveGuests(list) {
 //  STATS
 // ─────────────────────────────────────────────
 function updateStats(list) {
-  const totalPersonnes = list.reduce((sum, g) => sum + g.guests, 0);
+  const totalPersonnes = list.reduce((sum, g) => sum + (g.guests || 0), 0);
   statResponses.textContent = list.length;
   statTotal.textContent     = totalPersonnes;
 
@@ -103,11 +104,24 @@ function renderTable(list) {
 
   list.forEach((guest, index) => {
     const globalIndex = all.findIndex(g => g.id === guest.id);
+    const isPresent = guest.status !== 'absent';
+    const statusBadge = isPresent
+      ? '<span class="badge-present">Présent</span>'
+      : '<span class="badge-absent">Absent</span>';
+    const guestsBadge = isPresent
+      ? `<span class="badge-guests">👤 ${guest.guests || 0}</span>`
+      : '<span class="badge-guests badge-guests-na">—</span>';
+    const messageText = guest.message
+      ? `<span class="td-message-text">${escapeHtml(guest.message)}</span>`
+      : '<span class="td-message-empty">—</span>';
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="td-num">${globalIndex + 1}</td>
       <td class="td-name">${escapeHtml(guest.fullName)}</td>
-      <td><span class="badge-guests">👤 ${guest.guests}</span></td>
+      <td>${statusBadge}</td>
+      <td>${guestsBadge}</td>
+      <td class="td-message">${messageText}</td>
       <td class="td-date">${formatDate(guest.createdAt)}</td>
       <td>
         <div class="td-actions">
@@ -123,7 +137,6 @@ function renderTable(list) {
     guestsBody.appendChild(tr);
   });
 
-  // Attache les listeners sur chaque ligne
   guestsBody.querySelectorAll('.btn-edit').forEach(btn => {
     btn.addEventListener('click', () => openEdit(btn.dataset.id));
   });
@@ -160,7 +173,8 @@ function openEdit(id) {
 
   editId.value       = guest.id;
   editName.value     = guest.fullName;
-  editGuests.value   = guest.guests;
+  editGuests.value   = guest.guests || 0;
+  editMessage.value  = guest.message || '';
   editErrorName.textContent   = '';
   editErrorGuests.textContent = '';
   editName.classList.remove('invalid');
@@ -192,8 +206,8 @@ editForm.addEventListener('submit', e => {
   }
 
   const n = parseInt(editGuests.value, 10);
-  if (!editGuests.value || isNaN(n) || n < 1 || n > 20) {
-    editErrorGuests.textContent = 'Nombre entre 1 et 20.';
+  if (!editGuests.value || isNaN(n) || n < 0 || n > 20) {
+    editErrorGuests.textContent = 'Nombre entre 0 et 20.';
     editGuests.classList.add('invalid');
     valid = false;
   } else {
@@ -205,7 +219,7 @@ editForm.addEventListener('submit', e => {
 
   const list = getGuests().map(g => {
     if (String(g.id) === String(editId.value)) {
-      return { ...g, fullName: editName.value.trim(), guests: n };
+      return { ...g, fullName: editName.value.trim(), guests: n, message: editMessage.value.trim() };
     }
     return g;
   });
@@ -252,10 +266,12 @@ btnExport.addEventListener('click', () => {
     return;
   }
 
-  const headers = ['Nom & Prénom', 'Nombre de personnes', 'Date de réponse'];
+  const headers = ['Nom & Prénom', 'Statut', 'Nombre de personnes', 'Message', 'Date de réponse'];
   const rows = list.map(g => [
     `"${g.fullName.replace(/"/g, '""')}"`,
-    g.guests,
+    g.status === 'absent' ? 'Absent' : 'Présent',
+    g.guests || 0,
+    `"${(g.message || '').replace(/"/g, '""')}"`,
     `"${formatDate(g.createdAt)}"`
   ]);
 
@@ -274,7 +290,6 @@ btnExport.addEventListener('click', () => {
 // ─────────────────────────────────────────────
 renderTable(getGuests());
 
-// Refresh auto si une autre page a ajouté un invité
 window.addEventListener('focus', () => {
   renderTable(filterGuests(searchInput.value));
 });

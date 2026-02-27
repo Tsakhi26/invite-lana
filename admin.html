@@ -69,7 +69,9 @@
           <tr>
             <th>#</th>
             <th>Nom &amp; Prénom</th>
+            <th>Statut</th>
             <th>Personnes</th>
+            <th>Message</th>
             <th>Date de réponse</th>
             <th>Actions</th>
           </tr>
@@ -109,6 +111,10 @@
           <label for="edit-guests">Nombre de personnes</label>
           <input type="number" id="edit-guests" min="1" max="20" required />
           <span class="field-error" id="edit-error-guests"></span>
+        </div>
+        <div class="form-group">
+          <label for="edit-message">Message <span style="font-weight:400;color:#bbb;font-size:12px">(facultatif)</span></label>
+          <textarea id="edit-message" rows="3" style="background:#f9f9f9;border:1.5px solid #e0e0e0;border-radius:10px;color:#1a1a1a;font-size:15px;padding:12px 14px;outline:none;width:100%;resize:vertical;font-family:inherit;transition:border-color .2s,background .2s;"></textarea>
         </div>
         <div class="form-actions">
           <button type="button" class="btn-cancel" id="edit-cancel">Annuler</button>
