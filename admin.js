@@ -2,8 +2,6 @@
    ADMIN DASHBOARD — admin.js
    ============================================= */
 
-const STORAGE_KEY = 'invitation_guests';
-
 // ── Éléments DOM ────────────────────────────
 const statResponses   = document.getElementById('stat-responses');
 const statPresent     = document.getElementById('stat-present');
@@ -16,6 +14,7 @@ const guestsBody      = document.getElementById('guests-body');
 const emptyState      = document.getElementById('empty-state');
 const noResults       = document.getElementById('no-results');
 const btnExport       = document.getElementById('btn-export');
+const btnDedup        = document.getElementById('btn-dedup');
 
 // Modal edit
 const modalEditBackdrop = document.getElementById('modal-edit-backdrop');
@@ -36,15 +35,24 @@ const deleteCancel        = document.getElementById('delete-cancel');
 const deleteConfirm       = document.getElementById('delete-confirm');
 
 // ─────────────────────────────────────────────
-//  STOCKAGE
+//  STOCKAGE — Airtable via API serverless
 // ─────────────────────────────────────────────
-function getGuests() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
+let cachedGuests = [];
+
+async function fetchGuests() {
+  try {
+    const res = await fetch('/api/guests');
+    if (!res.ok) throw new Error('Erreur API');
+    cachedGuests = await res.json();
+  } catch (err) {
+    console.error('Erreur chargement:', err);
+    cachedGuests = [];
+  }
+  return cachedGuests;
 }
 
-function saveGuests(list) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+function getGuests() {
+  return cachedGuests;
 }
 
 // ─────────────────────────────────────────────
@@ -198,7 +206,7 @@ modalEditClose.addEventListener('click', closeEdit);
 editCancel.addEventListener('click', closeEdit);
 modalEditBackdrop.addEventListener('click', e => { if (e.target === modalEditBackdrop) closeEdit(); });
 
-editForm.addEventListener('submit', e => {
+editForm.addEventListener('submit', async e => {
   e.preventDefault();
   let valid = true;
 
@@ -223,15 +231,23 @@ editForm.addEventListener('submit', e => {
 
   if (!valid) return;
 
-  const list = getGuests().map(g => {
-    if (String(g.id) === String(editId.value)) {
-      return { ...g, fullName: editName.value.trim(), guests: n, message: editMessage.value.trim() };
-    }
-    return g;
-  });
+  try {
+    await fetch('/api/guests', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editId.value,
+        fullName: editName.value.trim(),
+        guests: n,
+        message: editMessage.value.trim(),
+      }),
+    });
+  } catch (err) {
+    console.error('Erreur modification:', err);
+  }
 
-  saveGuests(list);
   closeEdit();
+  await fetchGuests();
   renderTable(filterGuests(searchInput.value));
 });
 
@@ -254,11 +270,68 @@ function closeDelete() {
 deleteCancel.addEventListener('click', closeDelete);
 modalDeleteBackdrop.addEventListener('click', e => { if (e.target === modalDeleteBackdrop) closeDelete(); });
 
-deleteConfirm.addEventListener('click', () => {
+deleteConfirm.addEventListener('click', async () => {
   if (!pendingDeleteId) return;
-  const list = getGuests().filter(g => String(g.id) !== String(pendingDeleteId));
-  saveGuests(list);
+
+  try {
+    await fetch('/api/guests', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: pendingDeleteId }),
+    });
+  } catch (err) {
+    console.error('Erreur suppression:', err);
+  }
+
   closeDelete();
+  await fetchGuests();
+  renderTable(filterGuests(searchInput.value));
+});
+
+// ─────────────────────────────────────────────
+//  SUPPRIMER LES DOUBLONS
+// ─────────────────────────────────────────────
+btnDedup.addEventListener('click', async () => {
+  const all = getGuests();
+
+  // Grouper par nom (insensible à la casse)
+  const groups = {};
+  all.forEach(g => {
+    const key = g.fullName.toLowerCase().trim();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(g);
+  });
+
+  // Garder le plus récent, supprimer les autres
+  const toDelete = [];
+  Object.values(groups).forEach(group => {
+    if (group.length > 1) {
+      group.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      toDelete.push(...group.slice(1));
+    }
+  });
+
+  if (toDelete.length === 0) {
+    alert('Aucun doublon trouvé.');
+    return;
+  }
+
+  if (!confirm(`${toDelete.length} doublon(s) détecté(s). Supprimer en gardant la réponse la plus récente ?`)) return;
+
+  for (const guest of toDelete) {
+    try {
+      await fetch('/api/guests', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: guest.id }),
+      });
+    } catch (err) {
+      console.error('Erreur suppression doublon:', err);
+    }
+  }
+
+  alert(`${toDelete.length} doublon(s) supprimé(s).`);
+  await fetchGuests();
   renderTable(filterGuests(searchInput.value));
 });
 
@@ -294,8 +367,12 @@ btnExport.addEventListener('click', () => {
 // ─────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────
-renderTable(getGuests());
+(async () => {
+  await fetchGuests();
+  renderTable(getGuests());
+})();
 
-window.addEventListener('focus', () => {
+window.addEventListener('focus', async () => {
+  await fetchGuests();
   renderTable(filterGuests(searchInput.value));
 });

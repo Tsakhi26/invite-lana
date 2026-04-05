@@ -53,6 +53,37 @@ html, body {
 }
 
 /* =============================================
+   BOUTONS HEADER
+   ============================================= */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-dedup {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #f0f0f0;
+  color: #555;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-dedup:hover {
+  background: #e8e8e8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* =============================================
    BOUTON EXPORT
    ============================================= */
 .btn-export {
