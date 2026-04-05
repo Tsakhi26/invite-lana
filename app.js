@@ -180,8 +180,9 @@ rsvpForm.addEventListener('submit', async (e) => {
     createdAt: new Date().toISOString(),
   };
 
-  await saveGuest(guest);
+  closeModal();
   showSuccess();
+  saveGuest(guest);
 });
 
 function validateForm() {
