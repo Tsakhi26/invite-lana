@@ -63,29 +63,6 @@ module.exports = async function handler(req, res) {
     try {
       const { fullName, guests: guestCount, status, message, createdAt } = req.body;
 
-      // Vérifier si un participant avec ce nom existe déjà
-      try {
-        const safeName = (fullName || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        const filter = encodeURIComponent(`{fullName}="${safeName}"`);
-        const checkRes = await fetch(`${AIRTABLE_URL}?filterByFormula=${filter}`, { headers: headers() });
-        if (checkRes.ok) {
-          const checkData = await checkRes.json();
-          if (!checkData.error && checkData.records && checkData.records.length > 0) {
-            const existing = checkData.records[0];
-            return res.status(200).json({
-              id: existing.id,
-              fullName: existing.fields.fullName,
-              guests: existing.fields.guests,
-              status: existing.fields.status,
-              message: existing.fields.message,
-              createdAt: existing.fields.createdAt,
-            });
-          }
-        }
-      } catch (_) {
-        // Si le check échoue, on laisse passer la création normalement
-      }
-
       const r = await fetch(AIRTABLE_URL, {
         method: 'POST',
         headers: headers(),
