@@ -168,12 +168,11 @@ document.addEventListener('keydown', (e) => {
 // ─────────────────────────────────────────────
 //  FORMULAIRE RSVP : validation & sauvegarde
 // ─────────────────────────────────────────────
-rsvpForm.addEventListener('submit', (e) => {
+rsvpForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!validateForm()) return;
 
   const guest = {
-    id:        Date.now(),
     fullName:  inputName.value.trim(),
     guests:    rsvpMode === 'present' ? parseInt(inputGuests.value, 10) : 0,
     status:    rsvpMode,
@@ -181,7 +180,7 @@ rsvpForm.addEventListener('submit', (e) => {
     createdAt: new Date().toISOString(),
   };
 
-  saveGuest(guest);
+  await saveGuest(guest);
   showSuccess();
 });
 
@@ -213,21 +212,26 @@ function validateForm() {
 }
 
 // ─────────────────────────────────────────────
-//  STOCKAGE localStorage
+//  STOCKAGE — Airtable via API serverless
 // ─────────────────────────────────────────────
-const STORAGE_KEY = 'invitation_guests';
-
-function saveGuest(guest) {
-  const list = getGuests();
-  list.push(guest);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-}
-
-function getGuests() {
+async function saveGuest(guest) {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch {
-    return [];
+    const res = await fetch('/api/guests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName:  guest.fullName,
+        guests:    guest.guests,
+        status:    guest.status,
+        message:   guest.message,
+        createdAt: guest.createdAt,
+      }),
+    });
+    if (!res.ok) {
+      console.error('Erreur sauvegarde:', await res.text());
+    }
+  } catch (err) {
+    console.error('Erreur réseau:', err);
   }
 }
 
