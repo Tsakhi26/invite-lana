@@ -28,6 +28,12 @@ const editMessage       = document.getElementById('edit-message');
 const editErrorName     = document.getElementById('edit-error-name');
 const editErrorGuests   = document.getElementById('edit-error-guests');
 
+// Modal dedup
+const modalDedupBackdrop = document.getElementById('modal-dedup-backdrop');
+const dedupList          = document.getElementById('dedup-list');
+const dedupCancel        = document.getElementById('dedup-cancel');
+const dedupConfirm       = document.getElementById('dedup-confirm');
+
 // Modal delete
 const modalDeleteBackdrop = document.getElementById('modal-delete-backdrop');
 const deleteNamePreview   = document.getElementById('delete-name-preview');
@@ -291,6 +297,8 @@ deleteConfirm.addEventListener('click', async () => {
 // ─────────────────────────────────────────────
 //  SUPPRIMER LES DOUBLONS
 // ─────────────────────────────────────────────
+let pendingDedupList = [];
+
 btnDedup.addEventListener('click', async () => {
   const all = getGuests();
 
@@ -303,22 +311,41 @@ btnDedup.addEventListener('click', async () => {
   });
 
   // Garder le plus récent, supprimer les autres
-  const toDelete = [];
+  pendingDedupList = [];
   Object.values(groups).forEach(group => {
     if (group.length > 1) {
       group.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      toDelete.push(...group.slice(1));
+      pendingDedupList.push(...group.slice(1));
     }
   });
 
-  if (toDelete.length === 0) {
+  if (pendingDedupList.length === 0) {
     alert('Aucun doublon trouvé.');
     return;
   }
 
-  if (!confirm(`${toDelete.length} doublon(s) détecté(s). Supprimer en gardant la réponse la plus récente ?`)) return;
+  // Afficher la liste dans le modal
+  dedupList.innerHTML = pendingDedupList
+    .map(g => `<li><strong>${escapeHtml(g.fullName)}</strong> — répondu le ${formatDate(g.createdAt)}</li>`)
+    .join('');
+  modalDedupBackdrop.classList.remove('hidden');
+});
 
-  for (const guest of toDelete) {
+dedupCancel.addEventListener('click', () => {
+  modalDedupBackdrop.classList.add('hidden');
+  pendingDedupList = [];
+});
+modalDedupBackdrop.addEventListener('click', e => {
+  if (e.target === modalDedupBackdrop) {
+    modalDedupBackdrop.classList.add('hidden');
+    pendingDedupList = [];
+  }
+});
+
+dedupConfirm.addEventListener('click', async () => {
+  modalDedupBackdrop.classList.add('hidden');
+
+  for (const guest of pendingDedupList) {
     try {
       await fetch('/api/guests', {
         method: 'DELETE',
@@ -330,7 +357,9 @@ btnDedup.addEventListener('click', async () => {
     }
   }
 
-  alert(`${toDelete.length} doublon(s) supprimé(s).`);
+  const count = pendingDedupList.length;
+  pendingDedupList = [];
+  alert(`${count} doublon(s) supprimé(s).`);
   await fetchGuests();
   renderTable(filterGuests(searchInput.value));
 });

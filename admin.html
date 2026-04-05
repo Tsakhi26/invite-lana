@@ -134,6 +134,20 @@
     </div>
   </div>
 
+  <!-- MODAL CONFIRMER DOUBLONS -->
+  <div class="modal-backdrop hidden" id="modal-dedup-backdrop">
+    <div class="modal-delete" style="max-width:460px;width:90%;">
+      <span class="delete-icon">🔁</span>
+      <h3 class="delete-title">Doublons détectés</h3>
+      <p class="delete-sub" style="margin-bottom:12px;">Ces entrées seront supprimées <strong>(la plus récente est conservée)</strong> :</p>
+      <ul id="dedup-list" style="text-align:left;margin:0 0 18px 0;padding:0 0 0 18px;max-height:220px;overflow-y:auto;font-size:14px;color:#444;line-height:1.8;"></ul>
+      <div class="form-actions">
+        <button class="btn-cancel" id="dedup-cancel">Annuler</button>
+        <button class="btn-delete-confirm" id="dedup-confirm">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL CONFIRMER SUPPRESSION -->
   <div class="modal-backdrop hidden" id="modal-delete-backdrop">
     <div class="modal-delete">
