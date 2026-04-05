@@ -49,7 +49,8 @@ async function fetchGuests() {
   try {
     const res = await fetch('/api/guests');
     if (!res.ok) throw new Error('Erreur API');
-    cachedGuests = await res.json();
+    const data = await res.json();
+    cachedGuests = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   } catch (err) {
     console.error('Erreur chargement:', err);
     cachedGuests = [];
