@@ -1,13 +1,13 @@
-// Vercel Serverless Function — proxy sécurisé vers Airtable
-const AIRTABLE_TOKEN = process.env.AIRTABLE_TOKEN;
-const BASE_ID = 'app2et9SbsztGSlrK';
-const TABLE_ID = 'tblJxjAmUy0D0f3TE';
-const AIRTABLE_URL = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`;
+// Vercel Serverless Function — proxy sécurisé vers Notion
+const NOTION_TOKEN = (process.env.NOTION_TOKEN || '').trim();
+const DATABASE_ID = '4f13871b459b4d469de4b4458ddcd89e';
+const NOTION_URL = 'https://api.notion.com/v1';
 
 function headers() {
   return {
-    Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+    Authorization: `Bearer ${NOTION_TOKEN}`,
     'Content-Type': 'application/json',
+    'Notion-Version': '2022-06-28',
   };
 }
 
@@ -15,6 +15,18 @@ function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function pageToGuest(page) {
+  const p = page.properties;
+  return {
+    id: page.id,
+    fullName: p.fullName?.title?.[0]?.plain_text || '',
+    guests: p.guests?.number || 0,
+    status: p.status?.select?.name || 'present',
+    message: p.message?.rich_text?.[0]?.plain_text || '',
+    createdAt: p.createdAt?.date?.start || page.created_time,
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -27,32 +39,29 @@ module.exports = async function handler(req, res) {
   // GET — lire tous les invités
   if (req.method === 'GET') {
     try {
-      const allRecords = [];
-      let offset = null;
+      const allPages = [];
+      let cursor = undefined;
 
       do {
-        const url = offset
-          ? `${AIRTABLE_URL}?offset=${offset}`
-          : AIRTABLE_URL;
-        const r = await fetch(url, { headers: headers() });
+        const body = { page_size: 100 };
+        if (cursor) body.start_cursor = cursor;
+
+        const r = await fetch(`${NOTION_URL}/databases/${DATABASE_ID}/query`, {
+          method: 'POST',
+          headers: headers(),
+          body: JSON.stringify(body),
+        });
         const data = await r.json();
-        if (data.error) {
-          return res.status(500).json({ error: data.error });
+
+        if (!r.ok) {
+          return res.status(500).json({ error: data.message || 'Notion error' });
         }
-        allRecords.push(...data.records);
-        offset = data.offset || null;
-      } while (offset);
 
-      const guests = allRecords.map(rec => ({
-        id: rec.id,
-        fullName: rec.fields.fullName || '',
-        guests: rec.fields.guests || 0,
-        status: rec.fields.status || 'present',
-        message: rec.fields.message || '',
-        createdAt: rec.fields.createdAt || rec.createdTime,
-      }));
+        allPages.push(...data.results);
+        cursor = data.has_more ? data.next_cursor : undefined;
+      } while (cursor);
 
-      return res.status(200).json(guests);
+      return res.status(200).json(allPages.map(pageToGuest));
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -63,36 +72,27 @@ module.exports = async function handler(req, res) {
     try {
       const { fullName, guests: guestCount, status, message, createdAt } = req.body;
 
-      const r = await fetch(AIRTABLE_URL, {
+      const r = await fetch(`${NOTION_URL}/pages`, {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({
-          records: [{
-            fields: {
-              fullName,
-              guests: guestCount || 0,
-              status,
-              message: message || '',
-              createdAt: createdAt || new Date().toISOString(),
-            }
-          }]
+          parent: { database_id: DATABASE_ID },
+          properties: {
+            fullName: { title: [{ text: { content: fullName } }] },
+            guests: { number: guestCount || 0 },
+            status: { select: { name: status || 'present' } },
+            message: { rich_text: [{ text: { content: message || '' } }] },
+            createdAt: { date: { start: createdAt || new Date().toISOString() } },
+          },
         }),
       });
 
       const data = await r.json();
-      if (data.error) {
-        return res.status(500).json({ error: data.error });
+      if (!r.ok) {
+        return res.status(500).json({ error: data.message || 'Notion error' });
       }
 
-      const rec = data.records[0];
-      return res.status(201).json({
-        id: rec.id,
-        fullName: rec.fields.fullName,
-        guests: rec.fields.guests,
-        status: rec.fields.status,
-        message: rec.fields.message,
-        createdAt: rec.fields.createdAt,
-      });
+      return res.status(201).json(pageToGuest(data));
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -103,20 +103,21 @@ module.exports = async function handler(req, res) {
     try {
       const { id, fullName, guests: guestCount, message } = req.body;
 
-      const r = await fetch(AIRTABLE_URL, {
+      const r = await fetch(`${NOTION_URL}/pages/${id}`, {
         method: 'PATCH',
         headers: headers(),
         body: JSON.stringify({
-          records: [{
-            id,
-            fields: { fullName, guests: guestCount, message: message || '' }
-          }]
+          properties: {
+            fullName: { title: [{ text: { content: fullName } }] },
+            guests: { number: guestCount },
+            message: { rich_text: [{ text: { content: message || '' } }] },
+          },
         }),
       });
 
       const data = await r.json();
-      if (data.error) {
-        return res.status(500).json({ error: data.error });
+      if (!r.ok) {
+        return res.status(500).json({ error: data.message || 'Notion error' });
       }
       return res.status(200).json({ success: true });
     } catch (err) {
@@ -124,19 +125,20 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // DELETE — supprimer un invité
+  // DELETE — archiver un invité (suppression logique Notion)
   if (req.method === 'DELETE') {
     try {
       const { id } = req.body;
 
-      const r = await fetch(`${AIRTABLE_URL}?records[]=${id}`, {
-        method: 'DELETE',
+      const r = await fetch(`${NOTION_URL}/pages/${id}`, {
+        method: 'PATCH',
         headers: headers(),
+        body: JSON.stringify({ archived: true }),
       });
 
       const data = await r.json();
-      if (data.error) {
-        return res.status(500).json({ error: data.error });
+      if (!r.ok) {
+        return res.status(500).json({ error: data.message || 'Notion error' });
       }
       return res.status(200).json({ success: true });
     } catch (err) {
